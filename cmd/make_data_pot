@@ -1,0 +1,30 @@
+#!/bin/sh
+# Copyright © 2018, 2021 OOTA, Masato
+#
+# This is published by CC0 1.0.
+# For more information, see CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+# at https://creativecommons.org/publicdomain/zero/1.0/deed).
+
+set -e
+IFS='
+'
+ENDLESS_SKY_BASE=$1
+DATA_DIR=${ENDLESS_SKY_BASE}/data
+CMD_DIR=`dirname $0`
+CMD_DIR=`realpath $CMD_DIR`
+XGETTEXT=${CMD_DIR}/xgettext.endless_sky_data
+
+if [ $# -lt 1 ] ; then
+  echo Usage: $0 Endless_Sky_OR_Plugin_Base_Directory 1>&2
+  exit 1
+fi
+if [ ! -d $DATA_DIR ] ; then
+  echo The data directory is not found. 1>&2
+  exit 1
+fi
+if [ ! -x $XGETTEXT ] ; then
+  echo $XGETTEXT is not found. 1>&2
+  exit 1
+fi
+
+( cd $DATA_DIR && find -name '*.txt' -print0 | sort -z | xargs -0 ${CMD_DIR}/xgettext.endless_sky_data )

@@ -1,0 +1,24 @@
+#!/bin/sh
+# Copyright © 2018, 2019, 2021 OOTA, Masato
+#
+# This is published by CC0 1.0.
+# For more information, see CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+# at https://creativecommons.org/publicdomain/zero/1.0/deed).
+
+set -e
+IFS='
+'
+ENDLESS_SKY_BASE=$1
+SRC_DIR=${ENDLESS_SKY_BASE}/source
+
+if [ $# -lt 1 ] ; then
+  echo Usage: $0 Endless_Sky_Base_Directory 1>&2
+  exit 1
+fi
+if [ ! -d $SRC_DIR ] ; then
+  echo The source directory is not found. 1>&2
+  exit 1
+fi
+
+cd $SRC_DIR
+xgettext -c++ -kT_:1 -kT_:1,2c -kT:1 -kT:1,2c -knT:1,2 -knT:1,2,3c -kG:1 -kG:1,2c -cTRANSLATORS: -o - `find -name '*.cpp' -o -name '*.h'`

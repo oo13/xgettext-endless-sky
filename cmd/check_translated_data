@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8-unix -*-
+# Copyright © 2018, 2019, 2021 OOTA, Masato
+#
+# This is published by CC0 1.0.
+# For more information, see CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+# at https://creativecommons.org/publicdomain/zero/1.0/deed).
+"""Translate some texts in data files for checking.
+
+Note: Some texts, such as outfit's and mission's names, are not translated.
+"""
+
+import argparse
+import fileinput
+import gettext
+import locale
+import os
+import subprocess
+import shlex
+import sys
+import tempfile
+import time
+import endless_sky_po_parser
+
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument("-o", help="output filename", type=argparse.FileType('w'), default=sys.stdout)
+arg_parser.add_argument("-p", help="PO filename", type=argparse.FileType('r'), required=True)
+arg_parser.add_argument("-s", "--statistics", help="Show statistics", action="store_true")
+arg_parser.add_argument('data_filename', type=str, nargs='*', help="input data filename", default=('-',))
+args = arg_parser.parse_args()
+
+lang = locale.getlocale()[0]
+
+with tempfile.TemporaryDirectory() as tempdir:
+    msgdir = os.path.join(tempdir, lang, 'LC_MESSAGES')
+    mofilename = os.path.join(msgdir, 'endless-sky-data.mo')
+    stat_flag = "--statistics" if args.statistics else ""
+    os.makedirs(msgdir)
+    subprocess.check_call(shlex.split("msgfmt {} -o {} {}".format(stat_flag, mofilename, args.p.name)))
+    gettext.bindtextdomain('endless-sky-data', localedir=tempdir)
+    gettext.textdomain('endless-sky-data')
+    parser = endless_sky_po_parser.parser()
+
+    def translate(msg, context, comment, filename, linenumber):
+        s = msg[0]
+        if s == '':
+            return ''
+        if s != '' and context != '':
+            s = context + '\x04' + s
+        if s != '':
+            s = gettext.gettext(s)
+            context_n = context + '\x04'
+            if s.startswith(context_n):
+                # work around (gettext() doesn't use an entry including msgid_plural. it's incompatible the GNU gettext.)
+                s = gettext.ngettext(s, '', 1)
+                if s.startswith(context_n):
+                    s = msg[0];
+            return s
+        else:
+            return ''
+
+    parser.set_callback(translate)
+
+    # Main loop
+    with fileinput.input(files=args.data_filename) as f:
+        for line in f:
+            if f.isfirstline():
+                print(parser.flush(), end='')
+            print(parser.parse_line(line, f.filename(), f.filelineno()), end='')
+    print(parser.flush(), end='')
