@@ -42,22 +42,19 @@ with tempfile.TemporaryDirectory() as tempdir:
     parser = endless_sky_po_parser.parser()
 
     def translate(msg, context, comment, filename, linenumber):
-        s = msg[0]
-        if s == '':
+        original = msg[0]
+        if context != '':
+            original = context + '\x04' + original
+        if original == '':
             return ''
-        if s != '' and context != '':
-            s = context + '\x04' + s
-        if s != '':
-            s = gettext.gettext(s)
-            context_n = context + '\x04'
-            if s.startswith(context_n):
-                # work around (gettext() doesn't use an entry including msgid_plural. it's incompatible the GNU gettext.)
-                s = gettext.ngettext(s, '', 1)
-                if s.startswith(context_n):
-                    s = msg[0];
-            return s
         else:
-            return ''
+            translated = gettext.gettext(original)
+            if translated is original:
+                # work around (gettext() doesn't use an entry including msgid_plural. it's incompatible with the GNU gettext.)
+                translated = gettext.ngettext(original, '', 1)
+                if translated is original:
+                    translated = msg[0]
+            return translated
 
     parser.set_callback(translate)
 
