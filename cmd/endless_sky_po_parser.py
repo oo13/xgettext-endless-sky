@@ -13,6 +13,7 @@
 # Attribute of outfits and ships: "Attribute"
 # NPC ship names: "ship"
 # Special log keys: "log"
+# Category items: "category"
 # Commodity names and items: "commodity"
 # Conversations at the top level: "conversation: " + name
 # Conversations in any missions: "mission: " + name
@@ -698,6 +699,14 @@ _pi_conversation_lv0 = _ParseItem(
 ).add_child(
     _pt_conversation_body, 'conversation: {2}', '[conversation]: "{2}"'
 )
+_pi_category = _ParseItem(
+    'category', (), '', ''
+).add_child(
+    (
+        _pi_string_with_context,
+    ),
+    'category', '[category]: "{2}"'
+)
 _pi_event = _ParseItem(
     'event', (), '', ''
 ).add_child(
@@ -866,6 +875,7 @@ _pi_trade = _ParseItem(
 # top level parse table
 _pt_top = (
     _pi_conversation_lv0,
+    _pi_category,
     _pi_event,
     _pi_galaxy,
     _pi_government_lv0,
