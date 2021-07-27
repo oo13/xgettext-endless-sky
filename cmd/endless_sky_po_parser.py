@@ -34,6 +34,7 @@
 # Start names: "start"
 # System names: "system"
 # Sort keys for outfit names, ship's model names, and special log names: "sort key"
+# Sort keys for mission names: "mission sort key"
 # otherwise : no context
 
 # The class enum.Enum is too slow!
@@ -340,18 +341,27 @@ This filter makes up the sort key.
 class _MissionFilter(_FilterBase):
     """The filter class for mission nodes.
 
-This filter makes up the default name.
+This filter makes up the default name and the sort key.
 """
     def __init__(self, words, indent_number, filename, linenumber, cb):
         super().__init__(words, indent_number, filename, linenumber, cb)
         self.has_name = False
+        self.has_sort_key = False
         self.mission_id = words[1]
+        self.name = ''
     def check(self, words, indent_number):
-        if len(words) == 2 and words[0] == 'name':
-            self.has_name = True
+        if len(words) == 2:
+            if words[0] == 'name':
+                self.has_name = True
+                self.name = words[1]
+            elif words[0] == 'sort key':
+                self.has_sort_key = True
     def flush(self):
         if not self.has_name:
             self.cb((self.mission_id, ), 'mission', '[name] of [mission]: ' + self.mission_id, self.filename, self.linenumber)
+            self.name = self.mission_id
+        if not self.has_sort_key:
+            self.cb((self.name, ), 'mission sort key', '[sort key] of [mission]: ' + self.mission_id, self.filename, self.linenumber)
 
 class _OutfitFilter(_FilterBase):
     """The filter class for outfit nodes.
@@ -680,6 +690,7 @@ _pi_mission_on_any = _ParseConcatCommentItem(
     ),
     '{0}', ' in '
 )
+_pi_mission_sort_key = _ParseItem('sort key', 1, 'mission sort key', '[sort key] of {0}')
 _pi_news_message = _ParseItem(
     'message', (), '', ''
 ).mark_here_text('', '[message] of {0}')
@@ -778,6 +789,7 @@ _pi_mission = _ParseItem(
         _pi_mission_on_any,
         _pi_mission_npc_any,
         _pi_mission_name,
+        _pi_mission_sort_key,
     ),
     'mission: {2}', '[mission]: "{2}"'
 ).set_filter(_MissionFilter)
